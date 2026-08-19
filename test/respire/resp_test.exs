@@ -34,4 +34,30 @@ defmodule Respire.RESPTest do
       assert Respire.RESP.encode(:null) == "$-1\r\n"
     end
   end
+
+  describe "read_line/1" do
+    test "returns the line and the remaining bytes" do
+      assert Respire.RESP.read_line("$5\r\nhello\r\n") == {:ok, "$5", "hello\r\n"}
+    end
+
+    test "returns an empty rest when the CRLF ends the buffer" do
+      assert Respire.RESP.read_line("*2\r\n") == {:ok, "*2", ""}
+    end
+
+    test "returns :incomplete when there is no CRLF" do
+      assert Respire.RESP.read_line("$5") == :incomplete
+    end
+
+    test "returns :incomplete when the CRLF is split" do
+      assert Respire.RESP.read_line("$5\r") == :incomplete
+    end
+
+    test "returns :incomplete for an empty buffer" do
+      assert Respire.RESP.read_line("") == :incomplete
+    end
+
+    test "returns an empty line when the buffer starts with CRLF" do
+      assert Respire.RESP.read_line("\r\nabc") == {:ok, "", "abc"}
+    end
+  end
 end
